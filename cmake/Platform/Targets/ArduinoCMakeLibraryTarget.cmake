@@ -1,32 +1,4 @@
 #=============================================================================#
-# Sets compiler and linker flags on the given library target.
-# Changes are kept even outside the scope of the function since they apply on a target.
-#       _library_target - Name of the library target.
-#       _board_id - Board ID associated with the library. Some flags require it.
-#=============================================================================#
-function(_set_library_flags _library_target _board_id)
-
-    set(scope_options "PRIVATE" "PUBLIC" "INTERFACE")
-    cmake_parse_arguments(parsed_args "${scope_options}" "" "" ${ARGN})
-
-    if (parsed_args_PRIVATE)
-        set(scope PRIVATE)
-    elseif (parsed_args_INTERFACE)
-        set(scope INTERFACE)
-    else ()
-        set(scope PUBLIC)
-    endif ()
-
-    # Set C++ compiler flags
-    get_cmake_compliant_language_name(cpp flags_language)
-    set_compiler_target_flags(${_library_target} "${_board_id}" ${scope} LANGUAGE ${flags_language})
-
-    # Set linker flags
-    set_linker_flags(${_library_target} "${_board_id}")
-
-endfunction()
-
-#=============================================================================#
 # Creates a library target compliant with the Arduino library standard.
 # One can also specify an architecture for the library, which will result in a special parsing
 # of the sources, ommiting non-compliant sources.
@@ -45,7 +17,7 @@ function(_add_arduino_cmake_library _target_name _board_id _sources)
         list(LENGTH library_ARCH num_of_libs_archs)
         if (${num_of_libs_archs} GREATER 1)
             # Exclude all unsupported architectures, request filter in regex mode
-            _get_unsupported_architectures("${parsed_args_ARCH}" arch_filter REGEX)
+            get_unsupported_architectures("${parsed_args_ARCH}" arch_filter REGEX)
             set(filter_type EXCLUDE)
         else ()
             set(arch_filter "src\\/[^/]+\\.|${parsed_args_ARCH}")
@@ -66,7 +38,7 @@ function(_add_arduino_cmake_library _target_name _board_id _sources)
     get_headers_parent_directories("${_sources}" include_dirs)
     target_include_directories(${_target_name} ${scope} ${include_dirs})
 
-    _set_library_flags(${_target_name} ${_board_id} ${scope})
+    set_library_flags(${_target_name} ${_board_id} ${scope})
 
     if (parsed_args_ARCH)
         string(TOUPPER ${parsed_args_ARCH} upper_arch)
