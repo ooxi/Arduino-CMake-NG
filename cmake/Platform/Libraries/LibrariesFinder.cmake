@@ -28,15 +28,14 @@ function(find_arduino_library _target_name _library_name _board_id)
         message(SEND_ERROR "Couldn't find library named ${_library_name}")
     else () # Library is found
         get_filename_component(library_path ${library_properties_file} DIRECTORY)
-        get_library_architecture("${library_properties_file}" lib_arch)
-        if (lib_arch)
-            if ("${lib_arch}" MATCHES "UNSUPPORTED")
-                string(CONCAT error_message
-                        "${_library_name} "
-                        "library isn't supported on the platform's architecture "
-                        "${ARDUINO_CMAKE_PLATFORM_ARCHITECTURE}")
-                message(SEND_ERROR ${error_message})
-            endif ()
+        get_arduino_library_supported_architectures("${library_properties_file}" lib_archs)
+        is_library_supports_platform_architecture(${lib_archs} arch_supported_by_lib)
+        if (NOT ${arch_supported_by_lib})
+            string(CONCAT error_message
+                    "The ${_library_name} "
+                    "library isn't supported on the platform's architecture "
+                    "${ARDUINO_CMAKE_PLATFORM_ARCHITECTURE}")
+            message(SEND_ERROR ${error_message})
         endif ()
 
         find_library_header_files("${library_path}" library_headers)
